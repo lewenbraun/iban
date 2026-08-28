@@ -35,12 +35,15 @@ explicit user approval.
   edit files unless the user explicitly says to write into the project
 - After finishing, re-scan the latest user message and verify nothing was
   skipped
-- Run `make check` after any code change; report linter output verbatim
+- Run `make -C eban check` after any code change; report linter output
+  verbatim
 
 ## Project essentials
 
+- Skeleton root holds agent infrastructure only; the Go project lives in
+  `eban/` (module `github.com/lewenbraun/go-skeleton/eban`)
 - Binary `eban`: push-to-talk dictation, pw-record -> ElevenLabs Scribe v2
   -> clipboard (wl-copy) / typing (wtype)
-- Tooling pinned in go.mod `tool` block: golangci-lint, govulncheck,
+- Tooling pinned in eban/go.mod `tool` block: golangci-lint, govulncheck,
   stringer, modernize, goreleaser. Run via `go tool <name>` or make targets
 - Target: Arch Linux + Wayland + PipeWire. X11 fallback kept

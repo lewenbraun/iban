@@ -1,4 +1,4 @@
-module eban
+module github.com/lewenbraun/go-skeleton/eban
 
 go 1.27.0
 

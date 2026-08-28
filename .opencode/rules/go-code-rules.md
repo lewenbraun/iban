@@ -16,9 +16,9 @@ Configured limits are law, not suggestions:
 
 ## Language rules
 
-- Enums: `type State string` + const block. Never scatter raw strings that
-  are part of a known set
-- Enum-to-string for logs/CLI: stringer-generated, not hand-written
+- Enums: `type State string` + const block for values that are persisted or
+  printed as text (no String() needed — the value is the string). Integer
+  enums (`iota`) MUST get their String() from stringer via `go generate`
 - All user-facing strings, errors and identifiers: **English**
 - No comments in code unless the user explicitly asks for them
 - Command dispatch: `map[string]func([]string) error`, switch only for

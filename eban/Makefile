@@ -3,7 +3,7 @@ BIN := eban
 .PHONY: build install test vet lint fmt vuln modernize check clean
 
 build:
-	go build -o $(BIN) .
+	go build -o $(BIN) ./cmd/eban
 
 install: build
 	install -Dm755 $(BIN) $(HOME)/.local/bin/$(BIN)
