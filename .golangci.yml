@@ -1,0 +1,45 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - revive
+    - gocritic
+    - gosec
+    - unparam
+    - errorlint
+    - funlen
+    - gocyclo
+    - nestif
+    - dupl
+    - goconst
+    - exhaustive
+    - misspell
+    - unconvert
+    - copyloopvar
+    - nolintlint
+  settings:
+    funlen:
+      lines: 40
+      statements: 25
+    gocyclo:
+      min-complexity: 12
+    nestif:
+      min-complexity: 4
+    goconst:
+      min-occurrences: 3
+    gosec:
+      excludes:
+        - G204
+        - G304
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
