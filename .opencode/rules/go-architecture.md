@@ -18,7 +18,7 @@ contains project-specific constraints.
         ├── dictation/     orchestration Service + consumer-side seams (Recorder, Transcriber)
         ├── recorder/      pw-record process lifecycle
         ├── state/         State/Mode enums + file-backed Store (dir injectable)
-        ├── transcribe/elevenlabs/   Scribe v2 HTTP client + API key loading
+        ├── elevenlabs/    Scribe v2 HTTP client + API key loading
         └── output/        clipboard/typing/notify with Wayland and X11 backends
 ```
 
@@ -31,8 +31,8 @@ contains project-specific constraints.
 - `dictation.Service` consumes small interfaces defined where they are
   consumed: `Recorder` (dictation), `Transcriber` (dictation), and the
   output package's `Copier`/`Typer`/`Notifier`. Swapping ElevenLabs for
-  another provider = new package under `internal/transcribe/`, zero changes
-  in dictation or app
+  another provider = new package under `internal/` (e.g. `internal/whisper`),
+  zero changes in dictation or app
 - Platform backends (Wayland/X11, future Windows) live only in
   `internal/output/`. Never leak platform checks outside that package
 - `state.Store` takes its directory as a constructor arg — tests use

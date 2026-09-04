@@ -5,8 +5,6 @@ package app
 import (
 	"fmt"
 	"os"
-
-	"github.com/lewenbraun/go-skeleton/eban/internal/output"
 )
 
 const (
@@ -29,7 +27,6 @@ func Main(args []string) int {
 
 func execCommand(cmd func([]string) error, args []string) int {
 	if err := cmd(args); err != nil {
-		output.NewNotifier().Notify(err.Error(), output.UrgencyCritical)
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return exitErr
 	}

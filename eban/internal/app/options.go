@@ -27,7 +27,7 @@ func parseOptions(args []string) (*options, error) {
 	opts := &options{}
 	fs := flag.NewFlagSet("eban", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	fs.BoolVar(&opts.paste, "paste", false, "type text into focused window")
+	fs.BoolVar(&opts.paste, "paste", false, "paste text into the saved window")
 	fs.StringVar(&opts.lang, "lang", "", "speech language code")
 	fs.DurationVar(&opts.timeout, "timeout", defaults.DefaultTimeout, "max recording length")
 	if err := fs.Parse(args); err != nil {

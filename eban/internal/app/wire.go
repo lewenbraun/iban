@@ -2,17 +2,17 @@ package app
 
 import (
 	"github.com/lewenbraun/go-skeleton/eban/internal/dictation"
+	"github.com/lewenbraun/go-skeleton/eban/internal/elevenlabs"
 	"github.com/lewenbraun/go-skeleton/eban/internal/output"
 	"github.com/lewenbraun/go-skeleton/eban/internal/recorder"
 	"github.com/lewenbraun/go-skeleton/eban/internal/state"
-	"github.com/lewenbraun/go-skeleton/eban/internal/transcribe/elevenlabs"
 )
 
 const defaultStateDir = "/tmp/eban"
 
 func newService() *dictation.Service {
 	return dictation.New(dictation.DefaultConfig(defaultStateDir), recorder.New(),
-		newTranscriber, output.NewCopier(), output.NewTyper(), output.NewNotifier())
+		newTranscriber, output.NewCopier(), output.NewPaster())
 }
 
 func newTranscriber() (dictation.Transcriber, error) {

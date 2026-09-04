@@ -13,7 +13,7 @@ Commands:
   help      show this help
 
 Flags (toggle, start, stop):
-  -paste      always type text into the focused window
+  -paste      paste text into the window active when recording started
   -lang code  speech language, auto-detected by default
   -timeout    max recording length (default 10m)
 
@@ -21,5 +21,5 @@ API key:
   $ELEVENLABS_API_KEY or ~/.config/eban/apikey (chmod 600)
 
 Saying "paste" or one of its russian equivalents at the end of a phrase
-switches the result from clipboard-only to typing it out.
+switches the result from clipboard-only to pasting into the saved window.
 `

@@ -36,19 +36,9 @@ func TestSplitPasteCommand(t *testing.T) {
 	}
 }
 
-func TestTruncate(t *testing.T) {
-	t.Parallel()
-	if got := truncate("hello", 10); got != "hello" {
-		t.Errorf("truncate short = %q", got)
-	}
-	if got := truncate("привет мир как дела", 6); got != "привет..." {
-		t.Errorf("truncate long = %q", got)
-	}
-}
-
 func TestClampTimeout(t *testing.T) {
 	t.Parallel()
-	svc := New(DefaultConfig(""), nil, nil, nil, nil, nil)
+	svc := New(DefaultConfig(""), nil, nil, nil, nil)
 	cases := []struct {
 		in   time.Duration
 		want time.Duration

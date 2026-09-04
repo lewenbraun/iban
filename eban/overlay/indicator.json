@@ -1,0 +1,36 @@
+{
+  "indicator": {
+    "size_px": 19,
+    "shape": "circle",
+    "points": [
+      {
+        "corner": "top-left",
+        "x_px": 16,
+        "y_px": 16
+      },
+      {
+        "corner": "bottom-right",
+        "x_px": 16,
+        "y_px": 53
+      }
+    ]
+  },
+  "states": {
+    "recording": {
+      "color": "#c95f67",
+      "blink": false,
+      "blink_interval_ms": 500
+    },
+    "transcribing": {
+      "color": "#e5ad4f",
+      "blink": false,
+      "blink_interval_ms": 500
+    },
+    "done": {
+      "color": "#62b879",
+      "duration_ms": 3000,
+      "blink": false,
+      "blink_interval_ms": 500
+    }
+  }
+}

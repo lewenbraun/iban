@@ -12,7 +12,7 @@ func TestStoreRecordingRoundTrip(t *testing.T) {
 	if _, ok := s.RecordingPID(); ok {
 		t.Fatal("expected no active recording on a fresh store")
 	}
-	if err := s.SaveRecording(os.Getpid(), ModePaste, "ru"); err != nil {
+	if err := s.SaveRecording(os.Getpid(), ModePaste, "ru", "0x123"); err != nil {
 		t.Fatalf("SaveRecording: %v", err)
 	}
 	if pid, ok := s.RecordingPID(); !ok || pid != os.Getpid() {
@@ -24,6 +24,9 @@ func TestStoreRecordingRoundTrip(t *testing.T) {
 	if s.Lang() != "ru" {
 		t.Errorf("Lang = %q, want %q", s.Lang(), "ru")
 	}
+	if s.PasteTarget() != "0x123" {
+		t.Errorf("PasteTarget = %q, want %q", s.PasteTarget(), "0x123")
+	}
 	if s.Elapsed() < 0 {
 		t.Errorf("Elapsed = %v, want non-negative", s.Elapsed())
 	}
@@ -34,6 +37,9 @@ func TestStoreRecordingRoundTrip(t *testing.T) {
 	}
 	if s.Mode() != ModeCopy {
 		t.Errorf("Mode after clear = %q, want %q", s.Mode(), ModeCopy)
+	}
+	if s.PasteTarget() != "" {
+		t.Errorf("PasteTarget after clear = %q, want empty", s.PasteTarget())
 	}
 }
 
@@ -47,6 +53,10 @@ func TestStoreState(t *testing.T) {
 	s.SetState(StateTranscribing)
 	if s.State() != StateTranscribing {
 		t.Errorf("State = %q, want %q", s.State(), StateTranscribing)
+	}
+	s.SetIndicator(IndicatorDone)
+	if s.Indicator() != IndicatorDone {
+		t.Errorf("Indicator = %q, want %q", s.Indicator(), IndicatorDone)
 	}
 }
 
@@ -65,6 +75,26 @@ func TestParseState(t *testing.T) {
 	for _, tc := range cases {
 		if got := ParseState(tc.input); got != tc.want {
 			t.Errorf("ParseState(%q) = %v, want %v", tc.input, got, tc.want)
+		}
+	}
+}
+
+func TestParseIndicator(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		input string
+		want  IndicatorState
+	}{
+		{"recording", IndicatorRecording},
+		{"transcribing", IndicatorTranscribing},
+		{"done", IndicatorDone},
+		{"idle", IndicatorIdle},
+		{"garbage", IndicatorIdle},
+		{"", IndicatorIdle},
+	}
+	for _, tc := range cases {
+		if got := ParseIndicator(tc.input); got != tc.want {
+			t.Errorf("ParseIndicator(%q) = %v, want %v", tc.input, got, tc.want)
 		}
 	}
 }

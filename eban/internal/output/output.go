@@ -1,17 +1,14 @@
-// Package output delivers text to the user: clipboard, typing into the
-// focused window and desktop notifications, with Wayland/X11 backends.
+// Package output delivers text to the user through clipboard and target-aware
+// paste backends for Wayland and X11.
 package output
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
-)
-
-// Notification urgency levels understood by notify-send.
-const (
-	UrgencyNormal   = "normal"
-	UrgencyCritical = "critical"
 )
 
 func isWayland() bool {
@@ -34,22 +31,133 @@ func (x11Copier) Copy(text string) error {
 	return cmd.Run()
 }
 
-type waylandTyper struct{}
+type waylandPaster struct{}
 
-func (waylandTyper) Type(text string) error {
-	return exec.Command("wtype", "--", text).Run()
+type hyprlandWindow struct {
+	Address string `json:"address"`
 }
 
-type x11Typer struct{}
-
-func (x11Typer) Type(text string) error {
-	return exec.Command("xdotool", "type", "--delay", "0", "--", text).Run()
+type hyprlandOption struct {
+	Int int `json:"int"`
 }
 
-type notifySender struct{}
+func (waylandPaster) CaptureTarget() (string, error) {
+	return activeHyprlandWindow()
+}
 
-func (notifySender) Notify(body, urgency string) {
-	_ = exec.Command("notify-send", "-a", "eban", "-u", urgency, "-t", "3000", "Eban", body).Run()
+func activeHyprlandWindow() (string, error) {
+	b, err := exec.Command("hyprctl", "activewindow", "-j").Output()
+	if err != nil {
+		return "", fmt.Errorf("read active hyprland window: %w", err)
+	}
+	return parseHyprlandTarget(b)
+}
+
+func parseHyprlandTarget(b []byte) (string, error) {
+	var window hyprlandWindow
+	if err := json.Unmarshal(b, &window); err != nil {
+		return "", fmt.Errorf("parse active hyprland window: %w", err)
+	}
+	if !isHyprlandAddress(window.Address) {
+		return "", errors.New("invalid active hyprland window address")
+	}
+	return window.Address, nil
+}
+
+func (waylandPaster) PasteTarget(target string) error {
+	if !isHyprlandAddress(target) {
+		return errors.New("invalid hyprland window address")
+	}
+	current, err := activeHyprlandWindow()
+	if err != nil {
+		return err
+	}
+	if current == target {
+		return sendPasteShortcut(target)
+	}
+	noWarps, err := cursorNoWarps()
+	if err != nil {
+		return err
+	}
+	if err := setCursorNoWarps(true); err != nil {
+		return err
+	}
+	return pasteWithFocus(target, current, noWarps)
+}
+
+func pasteWithFocus(target, current string, noWarps bool) error {
+	if err := focusHyprlandWindow(target); err != nil {
+		return errors.Join(err, setCursorNoWarps(noWarps))
+	}
+	pasteErr := sendPasteShortcut(target)
+	restoreFocusErr := focusHyprlandWindow(current)
+	restoreCursorErr := setCursorNoWarps(noWarps)
+	return errors.Join(pasteErr, restoreFocusErr, restoreCursorErr)
+}
+
+func cursorNoWarps() (bool, error) {
+	b, err := exec.Command("hyprctl", "getoption", "cursor:no_warps", "-j").Output()
+	if err != nil {
+		return false, fmt.Errorf("read hyprland cursor warping setting: %w", err)
+	}
+	return parseHyprlandBool(b)
+}
+
+func parseHyprlandBool(b []byte) (bool, error) {
+	var option hyprlandOption
+	if err := json.Unmarshal(b, &option); err != nil {
+		return false, fmt.Errorf("parse hyprland option: %w", err)
+	}
+	if option.Int != 0 && option.Int != 1 {
+		return false, errors.New("invalid hyprland boolean option")
+	}
+	return option.Int == 1, nil
+}
+
+func setCursorNoWarps(enabled bool) error {
+	value := "false"
+	if enabled {
+		value = "true"
+	}
+	if err := exec.Command("hyprctl", "keyword", "cursor:no_warps", value).Run(); err != nil {
+		return fmt.Errorf("set hyprland cursor warping setting: %w", err)
+	}
+	return nil
+}
+
+func focusHyprlandWindow(target string) error {
+	if err := exec.Command("hyprctl", "dispatch", "focuswindow", "address:"+target).Run(); err != nil {
+		return fmt.Errorf("focus hyprland window: %w", err)
+	}
+	return nil
+}
+
+func sendPasteShortcut(target string) error {
+	if err := exec.Command("hyprctl", "dispatch", "sendshortcut", pasteShortcut(target)).Run(); err != nil {
+		return fmt.Errorf("send paste shortcut: %w", err)
+	}
+	return nil
+}
+
+type x11Paster struct{}
+
+func (x11Paster) CaptureTarget() (string, error) {
+	b, err := exec.Command("xdotool", "getactivewindow").Output()
+	if err != nil {
+		return "", fmt.Errorf("read active x11 window: %w", err)
+	}
+	target := strings.TrimSpace(string(b))
+	if !isX11Window(target) {
+		return "", errors.New("invalid active x11 window")
+	}
+	return target, nil
+}
+
+func (x11Paster) PasteTarget(target string) error {
+	if !isX11Window(target) {
+		return errors.New("invalid x11 window")
+	}
+	return exec.Command("xdotool", "key", "--window", target, "ctrl+v").Run()
 }
 
 // NewCopier returns the clipboard backend for the current session.
@@ -60,15 +168,42 @@ func NewCopier() Copier {
 	return x11Copier{}
 }
 
-// NewTyper returns the keyboard-typing backend for the current session.
-func NewTyper() Typer {
+// NewPaster returns the target-aware paste backend for the current session.
+func NewPaster() Paster {
 	if isWayland() {
-		return waylandTyper{}
+		return waylandPaster{}
 	}
-	return x11Typer{}
+	return x11Paster{}
 }
 
-// NewNotifier returns the desktop notification backend.
-func NewNotifier() Notifier {
-	return notifySender{}
+func isHyprlandAddress(value string) bool {
+	if !strings.HasPrefix(value, "0x") || len(value) == 2 {
+		return false
+	}
+	for _, r := range value[2:] {
+		if !isHexDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
+func isHexDigit(r rune) bool {
+	return r >= '0' && r <= '9' || r >= 'a' && r <= 'f' || r >= 'A' && r <= 'F'
+}
+
+func isX11Window(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func pasteShortcut(target string) string {
+	return "CTRL,code:55,address:" + target
 }

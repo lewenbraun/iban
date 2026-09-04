@@ -5,12 +5,8 @@ type Copier interface {
 	Copy(text string) error
 }
 
-// Typer types text into the currently focused window.
-type Typer interface {
-	Type(text string) error
-}
-
-// Notifier shows a desktop notification.
-type Notifier interface {
-	Notify(body, urgency string)
+// Paster captures a destination window and pastes into it later.
+type Paster interface {
+	CaptureTarget() (string, error)
+	PasteTarget(target string) error
 }

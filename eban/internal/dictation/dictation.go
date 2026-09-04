@@ -1,6 +1,6 @@
 // Package dictation orchestrates the record -> transcribe -> deliver flow
 // and defines the seams (consumer-side interfaces) every integration plugs
-// into: recorder, transcriber, clipboard, typer and notifier.
+// into: recorder, transcriber, clipboard, and target-aware paste.
 package dictation
 
 import (
@@ -54,8 +54,7 @@ type Service struct {
 	recorder       Recorder
 	newTranscriber TranscriberFactory
 	copier         output.Copier
-	typer          output.Typer
-	notifier       output.Notifier
+	paster         output.Paster
 	defaultTimeout time.Duration
 	maxTimeout     time.Duration
 	minRecording   time.Duration
@@ -63,14 +62,13 @@ type Service struct {
 }
 
 // New wires the service with its integration seams.
-func New(cfg Config, rec Recorder, tf TranscriberFactory, c output.Copier, t output.Typer, n output.Notifier) *Service {
+func New(cfg Config, rec Recorder, tf TranscriberFactory, c output.Copier, p output.Paster) *Service {
 	return &Service{
 		store:          state.New(cfg.StateDir),
 		recorder:       rec,
 		newTranscriber: tf,
 		copier:         c,
-		typer:          t,
-		notifier:       n,
+		paster:         p,
 		defaultTimeout: cfg.DefaultTimeout,
 		maxTimeout:     cfg.MaxTimeout,
 		minRecording:   cfg.MinRecording,
@@ -94,18 +92,22 @@ func (s *Service) Start(mode state.Mode, lang string, timeout time.Duration) err
 	if s.Active() {
 		return errors.New("recording is already active")
 	}
+	target, err := s.captureTarget(mode)
+	if err != nil {
+		return err
+	}
 	timeout = s.clampTimeout(timeout)
 	pid, err := s.recorder.Start(s.store.WavPath())
 	if err != nil {
 		return err
 	}
-	if err := s.store.SaveRecording(pid, mode, lang); err != nil {
+	if err := s.store.SaveRecording(pid, mode, lang, target); err != nil {
 		s.recorder.Stop(pid)
 		return fmt.Errorf("save recording state: %w", err)
 	}
 	recorder.SpawnWatchdog(pid, timeout)
 	s.store.SetState(state.StateRecording)
-	s.notifier.Notify("recording started", output.UrgencyNormal)
+	s.store.SetIndicator(state.IndicatorRecording)
 	return nil
 }
 
@@ -116,6 +118,7 @@ func (s *Service) Stop(lang string, paste bool) error {
 		return errors.New("no active recording")
 	}
 	mode := s.store.Mode()
+	target := s.store.PasteTarget()
 	if lang == "" {
 		lang = s.store.Lang()
 	}
@@ -123,33 +126,70 @@ func (s *Service) Stop(lang string, paste bool) error {
 	s.recorder.Stop(pid)
 	s.store.ClearRecording()
 	if elapsed < s.minRecording {
+		s.store.SetIndicator(state.IndicatorIdle)
 		return fmt.Errorf("recording too short (min %d ms)", s.minRecording.Milliseconds())
 	}
 	s.store.SetState(state.StateTranscribing)
-	s.notifier.Notify("transcribing...", output.UrgencyNormal)
-	return s.transcribeAndDeliver(lang, paste || mode == state.ModePaste)
+	s.store.SetIndicator(state.IndicatorTranscribing)
+	return s.transcribeAndDeliver(lang, paste || mode == state.ModePaste, target)
 }
 
-func (s *Service) transcribeAndDeliver(lang string, paste bool) error {
+func (s *Service) transcribeAndDeliver(lang string, paste bool, target string) error {
 	text, err := s.transcribe(lang)
 	if err != nil {
-		return err
+		return s.fail(err)
 	}
 	text, pasteCommand := SplitPasteCommand(text)
 	if text == "" {
-		return errors.New("empty transcript")
+		return s.fail(errors.New("empty transcript"))
 	}
 	if err := s.copier.Copy(text); err != nil {
-		return fmt.Errorf("copy to clipboard: %w", err)
+		return s.fail(fmt.Errorf("copy to clipboard: %w", err))
 	}
 	if paste || pasteCommand {
-		if err := s.typer.Type(text); err != nil {
-			return fmt.Errorf("type text: %w", err)
+		if err := s.pasteTarget(target); err != nil {
+			return s.fail(err)
 		}
 	}
-	s.notifier.Notify("done: "+truncate(text, previewLimit), output.UrgencyNormal)
 	s.store.SetState(state.StateIdle)
+	s.store.SetIndicator(state.IndicatorDone)
 	return nil
+}
+
+func (s *Service) captureTarget(mode state.Mode) (string, error) {
+	if s.paster == nil {
+		if mode == state.ModePaste {
+			return "", errors.New("paste target unavailable")
+		}
+		return "", nil
+	}
+	target, err := s.paster.CaptureTarget()
+	if err == nil {
+		return target, nil
+	}
+	if mode != state.ModePaste {
+		return "", nil
+	}
+	return "", fmt.Errorf("capture paste target: %w", err)
+}
+
+func (s *Service) pasteTarget(target string) error {
+	if target == "" {
+		return errors.New("missing paste target")
+	}
+	if s.paster == nil {
+		return errors.New("paste target unavailable")
+	}
+	if err := s.paster.PasteTarget(target); err != nil {
+		return fmt.Errorf("paste into saved target: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) fail(err error) error {
+	s.store.SetState(state.StateIdle)
+	s.store.SetIndicator(state.IndicatorIdle)
+	return err
 }
 
 func (s *Service) transcribe(lang string) (string, error) {

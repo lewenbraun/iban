@@ -33,6 +33,11 @@ func (s *Store) SetState(v State) {
 	_ = os.WriteFile(s.path("state"), []byte(v), 0o600)
 }
 
+// SetIndicator writes the current indicator state.
+func (s *Store) SetIndicator(v IndicatorState) {
+	_ = os.WriteFile(s.path("indicator"), []byte(v), 0o600)
+}
+
 // State reads the current state machine value.
 func (s *Store) State() State {
 	b, err := os.ReadFile(s.path("state"))
@@ -51,8 +56,26 @@ func ParseState(raw string) State {
 	return StateIdle
 }
 
+// Indicator reads the current indicator state.
+func (s *Store) Indicator() IndicatorState {
+	b, err := os.ReadFile(s.path("indicator"))
+	if err != nil {
+		return IndicatorIdle
+	}
+	return ParseIndicator(string(b))
+}
+
+// ParseIndicator normalizes raw indicator data into a valid state.
+func ParseIndicator(raw string) IndicatorState {
+	v := IndicatorState(strings.TrimSpace(raw))
+	if v == IndicatorRecording || v == IndicatorTranscribing || v == IndicatorDone {
+		return v
+	}
+	return IndicatorIdle
+}
+
 // SaveRecording persists the active recording session metadata.
-func (s *Store) SaveRecording(pid int, mode Mode, lang string) error {
+func (s *Store) SaveRecording(pid int, mode Mode, lang, target string) error {
 	if err := os.MkdirAll(s.dir, 0o700); err != nil {
 		return err
 	}
@@ -60,6 +83,7 @@ func (s *Store) SaveRecording(pid int, mode Mode, lang string) error {
 		{s.path("recording.pid"), strconv.Itoa(pid)},
 		{s.path("mode"), string(mode)},
 		{s.path("lang"), lang},
+		{s.path("target"), target},
 		{s.path("started_at"), strconv.FormatInt(time.Now().UnixNano(), 10)},
 	}
 	for _, e := range entries {
@@ -104,6 +128,15 @@ func (s *Store) Lang() string {
 	return strings.TrimSpace(string(b))
 }
 
+// PasteTarget returns the saved destination window for the active session.
+func (s *Store) PasteTarget() string {
+	b, err := os.ReadFile(s.path("target"))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(b))
+}
+
 // Elapsed returns how long the active recording has been running.
 func (s *Store) Elapsed() time.Duration {
 	b, err := os.ReadFile(s.path("started_at"))
@@ -119,7 +152,7 @@ func (s *Store) Elapsed() time.Duration {
 
 // ClearRecording removes the session files and resets the state.
 func (s *Store) ClearRecording() {
-	for _, name := range []string{"recording.pid", "mode", "lang", "started_at"} {
+	for _, name := range []string{"recording.pid", "mode", "lang", "target", "started_at"} {
 		_ = os.Remove(s.path(name))
 	}
 	s.SetState(StateIdle)

@@ -12,6 +12,17 @@ const (
 	StateTranscribing State = "transcribing"
 )
 
+// IndicatorState selects the visible recording indicator state.
+type IndicatorState string
+
+// Recording indicator states.
+const (
+	IndicatorIdle         IndicatorState = "idle"
+	IndicatorRecording    IndicatorState = "recording"
+	IndicatorTranscribing IndicatorState = "transcribing"
+	IndicatorDone         IndicatorState = "done"
+)
+
 // Mode selects the delivery behaviour for a recording session.
 type Mode string
 
