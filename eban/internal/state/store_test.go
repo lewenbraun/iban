@@ -43,6 +43,17 @@ func TestStoreRecordingRoundTrip(t *testing.T) {
 	}
 }
 
+func TestStorePasteEnterMode(t *testing.T) {
+	t.Parallel()
+	s := New(t.TempDir())
+	if err := s.SaveRecording(os.Getpid(), ModePasteEnter, "", "0x123"); err != nil {
+		t.Fatalf("SaveRecording: %v", err)
+	}
+	if got := s.Mode(); got != ModePasteEnter {
+		t.Errorf("Mode() = %q, want %q", got, ModePasteEnter)
+	}
+}
+
 func TestStoreState(t *testing.T) {
 	t.Parallel()
 	s := New(t.TempDir())

@@ -28,6 +28,7 @@ type Mode string
 
 // Delivery modes for a recording session.
 const (
-	ModeCopy  Mode = "copy"
-	ModePaste Mode = "paste"
+	ModeCopy       Mode = "copy"
+	ModePaste      Mode = "paste"
+	ModePasteEnter Mode = "paste-enter"
 )

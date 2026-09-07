@@ -128,3 +128,12 @@ func TestPasteShortcut(t *testing.T) {
 		t.Errorf("pasteShortcut() = %q, want %q", got, want)
 	}
 }
+
+func TestEnterShortcut(t *testing.T) {
+	t.Parallel()
+	const target = "0x1a2b"
+	const want = ",code:36,address:" + target
+	if got := enterShortcut(target); got != want {
+		t.Errorf("enterShortcut() = %q, want %q", got, want)
+	}
+}

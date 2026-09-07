@@ -113,8 +113,12 @@ func (s *Store) RecordingPID() (int, bool) {
 // Mode returns the delivery mode saved for the active session.
 func (s *Store) Mode() Mode {
 	b, err := os.ReadFile(s.path("mode"))
-	if err == nil && Mode(strings.TrimSpace(string(b))) == ModePaste {
-		return ModePaste
+	if err != nil {
+		return ModeCopy
+	}
+	mode := Mode(strings.TrimSpace(string(b)))
+	if mode == ModePaste || mode == ModePasteEnter {
+		return mode
 	}
 	return ModeCopy
 }

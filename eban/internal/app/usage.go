@@ -14,6 +14,7 @@ Commands:
 
 Flags (toggle, start, stop):
   -paste      paste text into the window active when recording started
+  -enter      paste text and press Enter in that window
   -lang code  speech language, auto-detected by default
   -timeout    max recording length (default 10m)
 

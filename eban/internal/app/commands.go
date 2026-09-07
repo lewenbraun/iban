@@ -14,7 +14,11 @@ var commands = map[string]func([]string) error{
 func cmdToggle(args []string) error {
 	svc := newService()
 	if svc.Active() {
-		return svc.Stop("", false)
+		opts, err := parseOptions(args)
+		if err != nil {
+			return err
+		}
+		return svc.Stop(opts.lang, opts.paste, opts.enter)
 	}
 	return cmdStart(args)
 }
@@ -32,7 +36,7 @@ func cmdStop(args []string) error {
 	if err != nil {
 		return err
 	}
-	return newService().Stop(opts.lang, opts.paste)
+	return newService().Stop(opts.lang, opts.paste, opts.enter)
 }
 
 func cmdStatus([]string) error {

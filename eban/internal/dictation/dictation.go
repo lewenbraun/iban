@@ -112,7 +112,7 @@ func (s *Service) Start(mode state.Mode, lang string, timeout time.Duration) err
 }
 
 // Stop ends the session, transcribes and delivers the result.
-func (s *Service) Stop(lang string, paste bool) error {
+func (s *Service) Stop(lang string, paste, pressEnter bool) error {
 	pid, active := s.store.RecordingPID()
 	if !active {
 		return errors.New("no active recording")
@@ -131,10 +131,12 @@ func (s *Service) Stop(lang string, paste bool) error {
 	}
 	s.store.SetState(state.StateTranscribing)
 	s.store.SetIndicator(state.IndicatorTranscribing)
-	return s.transcribeAndDeliver(lang, paste || mode == state.ModePaste, target)
+	paste = paste || mode == state.ModePaste || mode == state.ModePasteEnter
+	pressEnter = pressEnter || mode == state.ModePasteEnter
+	return s.transcribeAndDeliver(lang, paste, pressEnter, target)
 }
 
-func (s *Service) transcribeAndDeliver(lang string, paste bool, target string) error {
+func (s *Service) transcribeAndDeliver(lang string, paste, pressEnter bool, target string) error {
 	text, err := s.transcribe(lang)
 	if err != nil {
 		return s.fail(err)
@@ -147,7 +149,7 @@ func (s *Service) transcribeAndDeliver(lang string, paste bool, target string) e
 		return s.fail(fmt.Errorf("copy to clipboard: %w", err))
 	}
 	if paste || pasteCommand {
-		if err := s.pasteTarget(target); err != nil {
+		if err := s.pasteTarget(target, pressEnter); err != nil {
 			return s.fail(err)
 		}
 	}
@@ -158,7 +160,7 @@ func (s *Service) transcribeAndDeliver(lang string, paste bool, target string) e
 
 func (s *Service) captureTarget(mode state.Mode) (string, error) {
 	if s.paster == nil {
-		if mode == state.ModePaste {
+		if mode == state.ModePaste || mode == state.ModePasteEnter {
 			return "", errors.New("paste target unavailable")
 		}
 		return "", nil
@@ -173,14 +175,14 @@ func (s *Service) captureTarget(mode state.Mode) (string, error) {
 	return "", fmt.Errorf("capture paste target: %w", err)
 }
 
-func (s *Service) pasteTarget(target string) error {
+func (s *Service) pasteTarget(target string, pressEnter bool) error {
 	if target == "" {
 		return errors.New("missing paste target")
 	}
 	if s.paster == nil {
 		return errors.New("paste target unavailable")
 	}
-	if err := s.paster.PasteTarget(target); err != nil {
+	if err := s.paster.PasteTarget(target, pressEnter); err != nil {
 		return fmt.Errorf("paste into saved target: %w", err)
 	}
 	return nil

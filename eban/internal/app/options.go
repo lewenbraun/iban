@@ -11,11 +11,15 @@ import (
 
 type options struct {
 	paste   bool
+	enter   bool
 	lang    string
 	timeout time.Duration
 }
 
 func (o *options) mode() state.Mode {
+	if o.enter {
+		return state.ModePasteEnter
+	}
 	if o.paste {
 		return state.ModePaste
 	}
@@ -28,6 +32,7 @@ func parseOptions(args []string) (*options, error) {
 	fs := flag.NewFlagSet("eban", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.BoolVar(&opts.paste, "paste", false, "paste text into the saved window")
+	fs.BoolVar(&opts.enter, "enter", false, "paste text and press Enter")
 	fs.StringVar(&opts.lang, "lang", "", "speech language code")
 	fs.DurationVar(&opts.timeout, "timeout", defaults.DefaultTimeout, "max recording length")
 	if err := fs.Parse(args); err != nil {

@@ -64,7 +64,7 @@ func parseHyprlandTarget(b []byte) (string, error) {
 	return window.Address, nil
 }
 
-func (waylandPaster) PasteTarget(target string) error {
+func (waylandPaster) PasteTarget(target string, pressEnter bool) error {
 	if !isHyprlandAddress(target) {
 		return errors.New("invalid hyprland window address")
 	}
@@ -73,7 +73,7 @@ func (waylandPaster) PasteTarget(target string) error {
 		return err
 	}
 	if current == target {
-		return sendPasteShortcut(target)
+		return sendPasteAndEnter(target, pressEnter)
 	}
 	noWarps, err := cursorNoWarps()
 	if err != nil {
@@ -82,14 +82,14 @@ func (waylandPaster) PasteTarget(target string) error {
 	if err := setCursorNoWarps(true); err != nil {
 		return err
 	}
-	return pasteWithFocus(target, current, noWarps)
+	return pasteWithFocus(target, current, noWarps, pressEnter)
 }
 
-func pasteWithFocus(target, current string, noWarps bool) error {
+func pasteWithFocus(target, current string, noWarps, pressEnter bool) error {
 	if err := focusHyprlandWindow(target); err != nil {
 		return errors.Join(err, setCursorNoWarps(noWarps))
 	}
-	pasteErr := sendPasteShortcut(target)
+	pasteErr := sendPasteAndEnter(target, pressEnter)
 	restoreFocusErr := focusHyprlandWindow(current)
 	restoreCursorErr := setCursorNoWarps(noWarps)
 	return errors.Join(pasteErr, restoreFocusErr, restoreCursorErr)
@@ -139,6 +139,22 @@ func sendPasteShortcut(target string) error {
 	return nil
 }
 
+func sendPasteAndEnter(target string, pressEnter bool) error {
+	pasteErr := sendPasteShortcut(target)
+	if !pressEnter {
+		return pasteErr
+	}
+	enterErr := sendEnterShortcut(target)
+	return errors.Join(pasteErr, enterErr)
+}
+
+func sendEnterShortcut(target string) error {
+	if err := exec.Command("hyprctl", "dispatch", "sendshortcut", enterShortcut(target)).Run(); err != nil {
+		return fmt.Errorf("send Enter shortcut: %w", err)
+	}
+	return nil
+}
+
 type x11Paster struct{}
 
 func (x11Paster) CaptureTarget() (string, error) {
@@ -153,11 +169,20 @@ func (x11Paster) CaptureTarget() (string, error) {
 	return target, nil
 }
 
-func (x11Paster) PasteTarget(target string) error {
+func (x11Paster) PasteTarget(target string, pressEnter bool) error {
 	if !isX11Window(target) {
 		return errors.New("invalid x11 window")
 	}
-	return exec.Command("xdotool", "key", "--window", target, "ctrl+v").Run()
+	if err := exec.Command("xdotool", "key", "--window", target, "ctrl+v").Run(); err != nil {
+		return fmt.Errorf("paste into x11 window: %w", err)
+	}
+	if !pressEnter {
+		return nil
+	}
+	if err := exec.Command("xdotool", "key", "--window", target, "Return").Run(); err != nil {
+		return fmt.Errorf("send Enter to x11 window: %w", err)
+	}
+	return nil
 }
 
 // NewCopier returns the clipboard backend for the current session.
@@ -206,4 +231,8 @@ func isX11Window(value string) bool {
 
 func pasteShortcut(target string) string {
 	return "CTRL,code:55,address:" + target
+}
+
+func enterShortcut(target string) string {
+	return ",code:36,address:" + target
 }

@@ -36,14 +36,16 @@ type testPaster struct {
 	captureErr   error
 	pasteErr     error
 	pastedTarget string
+	pressedEnter bool
 }
 
 func (p *testPaster) CaptureTarget() (string, error) {
 	return p.target, p.captureErr
 }
 
-func (p *testPaster) PasteTarget(target string) error {
+func (p *testPaster) PasteTarget(target string, pressEnter bool) error {
 	p.pastedTarget = target
+	p.pressedEnter = pressEnter
 	return p.pasteErr
 }
 
@@ -55,6 +57,7 @@ type testDependencies struct {
 
 type deliveryExpectation struct {
 	paste          bool
+	pressEnter     bool
 	wantErr        bool
 	state          state.State
 	indicatorState state.IndicatorState
@@ -80,7 +83,7 @@ func assertDeliveryState(t *testing.T, svc *Service, expected deliveryExpectatio
 	t.Helper()
 	svc.store.SetState(state.StateTranscribing)
 
-	err := svc.transcribeAndDeliver("", expected.paste, expected.target)
+	err := svc.transcribeAndDeliver("", expected.paste, expected.pressEnter, expected.target)
 	if (err != nil) != expected.wantErr {
 		t.Fatalf("transcribeAndDeliver() error = %v, want error: %t", err, expected.wantErr)
 	}
@@ -162,6 +165,26 @@ func TestServiceTranscribeAndDeliverPastesSavedTarget(t *testing.T) {
 	})
 	if paster.pastedTarget != testTarget {
 		t.Errorf("PasteTarget() = %q, want %q", paster.pastedTarget, testTarget)
+	}
+}
+
+func TestServiceTranscribeAndDeliverPastesAndPressesEnter(t *testing.T) {
+	t.Parallel()
+	paster := &testPaster{}
+	svc := newTestService(t, testDependencies{
+		transcriber: testTranscriber{text: testText},
+		paster:      paster,
+	})
+
+	assertDeliveryState(t, svc, deliveryExpectation{
+		paste:          true,
+		pressEnter:     true,
+		state:          state.StateIdle,
+		indicatorState: state.IndicatorDone,
+		target:         testTarget,
+	})
+	if !paster.pressedEnter {
+		t.Error("PasteTarget() did not request Enter")
 	}
 }
 
