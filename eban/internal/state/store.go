@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
+
+	"github.com/lewenbraun/go-skeleton/eban/internal/procs"
 )
 
 // Store persists dictation session state as files in a directory.
@@ -104,7 +105,7 @@ func (s *Store) RecordingPID() (int, bool) {
 	if err != nil || pid <= 0 {
 		return 0, false
 	}
-	if syscall.Kill(pid, 0) != nil {
+	if !procs.Alive(pid) {
 		return 0, false
 	}
 	return pid, true
@@ -121,6 +122,11 @@ func (s *Store) Mode() Mode {
 		return mode
 	}
 	return ModeCopy
+}
+
+// SetMode overwrites the delivery mode of the active session.
+func (s *Store) SetMode(m Mode) {
+	_ = os.WriteFile(s.path("mode"), []byte(m), 0o600)
 }
 
 // Lang returns the language hint saved for the active session.

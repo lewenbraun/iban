@@ -1,3 +1,5 @@
+//go:build !windows
+
 // Package output delivers text to the user through clipboard and target-aware
 // paste backends for Wayland and X11.
 package output

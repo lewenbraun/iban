@@ -54,6 +54,18 @@ func TestStorePasteEnterMode(t *testing.T) {
 	}
 }
 
+func TestStoreSetModeOverwrites(t *testing.T) {
+	t.Parallel()
+	s := New(t.TempDir())
+	if err := s.SaveRecording(os.Getpid(), ModePasteEnter, "", "0x123"); err != nil {
+		t.Fatalf("SaveRecording: %v", err)
+	}
+	s.SetMode(ModeCopy)
+	if got := s.Mode(); got != ModeCopy {
+		t.Errorf("Mode() = %q, want %q", got, ModeCopy)
+	}
+}
+
 func TestStoreState(t *testing.T) {
 	t.Parallel()
 	s := New(t.TempDir())

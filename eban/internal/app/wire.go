@@ -1,6 +1,9 @@
 package app
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/lewenbraun/go-skeleton/eban/internal/dictation"
 	"github.com/lewenbraun/go-skeleton/eban/internal/elevenlabs"
 	"github.com/lewenbraun/go-skeleton/eban/internal/output"
@@ -8,7 +11,7 @@ import (
 	"github.com/lewenbraun/go-skeleton/eban/internal/state"
 )
 
-const defaultStateDir = "/tmp/eban"
+var defaultStateDir = filepath.Join(os.TempDir(), "eban")
 
 func newService() *dictation.Service {
 	return dictation.New(dictation.DefaultConfig(defaultStateDir), recorder.New(),

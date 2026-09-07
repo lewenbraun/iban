@@ -14,6 +14,9 @@ test:
 vet:
 	go vet ./...
 
+vet-windows:
+	GOOS=windows go vet -unsafeptr=false ./...
+
 lint:
 	go tool golangci-lint run
 
@@ -26,7 +29,8 @@ vuln:
 modernize:
 	go tool modernize ./...
 
-check: vet lint test build
+check: vet lint test build vet-windows
+	GOOS=windows go build ./...
 
 clean:
 	rm -f $(BIN)

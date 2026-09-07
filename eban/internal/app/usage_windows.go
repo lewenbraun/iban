@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build windows
 
 package app
 
@@ -12,6 +12,7 @@ Commands:
   start     start recording
   stop      stop, transcribe, copy/paste text
   status    print state (idle|recording|transcribing)
+  tray      run the tray indicator and Alt+Space hotkeys (right click quits)
   help      show this help
 
 Flags (toggle, start, stop):
@@ -20,8 +21,15 @@ Flags (toggle, start, stop):
   -lang code  speech language, auto-detected by default
   -timeout    max recording length (default 10m)
 
-API key:
-  $ELEVENLABS_API_KEY or ~/.config/eban/apikey (chmod 600)
+Tray hotkeys (hold to record, release to deliver):
+  Alt+Space     paste into the invoking window and press Enter
+  Alt+Space+V   paste into the invoking window
+  Alt+Space+B   copy to clipboard only
+
+Setup:
+  scoop install ffmpeg (recording backend)
+  setx ELEVENLABS_API_KEY "<key>" (or put the key into
+  the apikey file under .config\eban in your home directory)
 
 Saying "paste" or one of its russian equivalents at the end of a phrase
 switches the result from clipboard-only to pasting into the saved window.
