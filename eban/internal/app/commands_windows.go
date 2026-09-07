@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/state"
-	"github.com/lewenbraun/go-skeleton/eban/internal/tray"
+	"github.com/lewenbraun/eban/eban/internal/state"
+	"github.com/lewenbraun/eban/eban/internal/tray"
 )
 
 const trayDaemonArg = "--daemon"

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/recorder"
+	"github.com/lewenbraun/eban/eban/internal/recorder"
 )
 
 // RunWatchdog sleeps for the requested timeout and then stops the recording

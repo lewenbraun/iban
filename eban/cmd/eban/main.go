@@ -5,7 +5,7 @@ package main
 import (
 	"os"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/app"
+	"github.com/lewenbraun/eban/eban/internal/app"
 )
 
 func main() {

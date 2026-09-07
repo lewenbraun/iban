@@ -5,7 +5,7 @@
 package hotkey
 
 import (
-	"github.com/lewenbraun/go-skeleton/eban/internal/state"
+	"github.com/lewenbraun/eban/eban/internal/state"
 )
 
 // Windows virtual-key codes used by the chord.

@@ -7,9 +7,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/dictation"
-	"github.com/lewenbraun/go-skeleton/eban/internal/hotkey"
-	"github.com/lewenbraun/go-skeleton/eban/internal/state"
+	"github.com/lewenbraun/eban/eban/internal/dictation"
+	"github.com/lewenbraun/eban/eban/internal/hotkey"
+	"github.com/lewenbraun/eban/eban/internal/state"
 )
 
 type kbdllHookStruct struct {

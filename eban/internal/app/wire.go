@@ -4,11 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/dictation"
-	"github.com/lewenbraun/go-skeleton/eban/internal/elevenlabs"
-	"github.com/lewenbraun/go-skeleton/eban/internal/output"
-	"github.com/lewenbraun/go-skeleton/eban/internal/recorder"
-	"github.com/lewenbraun/go-skeleton/eban/internal/state"
+	"github.com/lewenbraun/eban/eban/internal/dictation"
+	"github.com/lewenbraun/eban/eban/internal/elevenlabs"
+	"github.com/lewenbraun/eban/eban/internal/output"
+	"github.com/lewenbraun/eban/eban/internal/recorder"
+	"github.com/lewenbraun/eban/eban/internal/state"
 )
 
 var defaultStateDir = filepath.Join(os.TempDir(), "eban")

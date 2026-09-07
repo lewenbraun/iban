@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/state"
+	"github.com/lewenbraun/eban/eban/internal/state"
 )
 
 func TestOptionsMode(t *testing.T) {

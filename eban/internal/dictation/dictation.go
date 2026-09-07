@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/output"
-	"github.com/lewenbraun/go-skeleton/eban/internal/recorder"
-	"github.com/lewenbraun/go-skeleton/eban/internal/state"
+	"github.com/lewenbraun/eban/eban/internal/output"
+	"github.com/lewenbraun/eban/eban/internal/recorder"
+	"github.com/lewenbraun/eban/eban/internal/state"
 )
 
 // Recorder captures audio into a WAV file as a detached process.

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/procs"
+	"github.com/lewenbraun/eban/eban/internal/procs"
 )
 
 // Store persists dictation session state as files in a directory.

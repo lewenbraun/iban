@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/procs"
+	"github.com/lewenbraun/eban/eban/internal/procs"
 )
 
 const stopGrace = 3 * time.Second

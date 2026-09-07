@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/lewenbraun/go-skeleton/eban/internal/output"
-	"github.com/lewenbraun/go-skeleton/eban/internal/state"
+	"github.com/lewenbraun/eban/eban/internal/output"
+	"github.com/lewenbraun/eban/eban/internal/state"
 )
 
 const (
