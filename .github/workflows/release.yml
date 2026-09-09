@@ -22,10 +22,10 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version-file: eban/go.mod
-          cache-dependency-path: eban/go.sum
+          go-version-file: iban/go.mod
+          cache-dependency-path: iban/go.sum
       - name: Build and publish release
-        working-directory: eban
+        working-directory: iban
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: go tool goreleaser release --clean
@@ -40,17 +40,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
-      - name: Point eban.json at the new release
+      - name: Point iban.json at the new release
         env:
           REPO: ${{ github.repository }}
           TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VER="${TAG#v}"
-          ZIP="eban_${VER}_windows_amd64.zip"
+          ZIP="iban_${VER}_windows_amd64.zip"
           BASE="https://github.com/${REPO}/releases/download/${TAG}"
-          gh release download "$TAG" --repo "$REPO" --pattern "eban_${VER}_checksums.txt" --dir "$RUNNER_TEMP"
-          HASH=$(awk -v f="${ZIP}" '$2==f {print $1}' "$RUNNER_TEMP/eban_${VER}_checksums.txt")
+          gh release download "$TAG" --repo "$REPO" --pattern "iban_${VER}_checksums.txt" --dir "$RUNNER_TEMP"
+          HASH=$(awk -v f="${ZIP}" '$2==f {print $1}' "$RUNNER_TEMP/iban_${VER}_checksums.txt")
           if [ -z "${HASH}" ]; then
             echo "checksum for ${ZIP} not found" >&2
             exit 1
@@ -58,11 +58,11 @@ jobs:
           jq \
             --arg v "${VER}" --arg u "${BASE}/${ZIP}" --arg h "${HASH}" \
             '.version=$v | .architecture."64bit".url=$u | .architecture."64bit".hash=$h' \
-            eban.json > /tmp/eban.json
-          mv /tmp/eban.json eban.json
+            iban.json > /tmp/iban.json
+          mv /tmp/iban.json iban.json
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add eban.json
+          git add iban.json
           git diff --cached --quiet && exit 0
           git commit -m "chore: scoop manifest ${TAG}"
           git push

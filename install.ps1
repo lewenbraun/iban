@@ -1,9 +1,9 @@
 param([string]$Tag)
 $ErrorActionPreference = 'Stop'
-$repo = 'lewenbraun/eban'
+$repo = 'lewenbraun/iban'
 $gh = (Get-Command gh -ErrorAction Stop).Source
-$installDir = Join-Path $env:LOCALAPPDATA 'Eban'
-$stage = Join-Path ([IO.Path]::GetTempPath()) ('eban-install-' + [guid]::NewGuid().ToString('N'))
+$installDir = Join-Path $env:LOCALAPPDATA 'Iban'
+$stage = Join-Path ([IO.Path]::GetTempPath()) ('iban-install-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $stage | Out-Null
 if (-not $Tag) {
     $Tag = & $gh release view --repo $repo --json tagName --jq .tagName
@@ -11,8 +11,8 @@ if (-not $Tag) {
 }
 if ($Tag -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') { throw "Unsupported release tag: $Tag" }
 $version = $Tag.Substring(1)
-$archive = "eban_${version}_windows_amd64.zip"
-$checksums = "eban_${version}_checksums.txt"
+$archive = "iban_${version}_windows_amd64.zip"
+$checksums = "iban_${version}_checksums.txt"
 & $gh release download $Tag --repo $repo --pattern $archive --pattern $checksums --dir $stage
 if ($LASTEXITCODE -ne 0) { throw 'Release download failed; installed version unchanged.' }
 $line = @(Get-Content -LiteralPath (Join-Path $stage $checksums) | Where-Object { ($_ -split '\s+')[-1] -eq $archive })
@@ -22,8 +22,8 @@ if ($expected -notmatch '^[a-fA-F0-9]{64}$') { throw 'Invalid SHA256 checksum.' 
 if ((Get-FileHash -LiteralPath (Join-Path $stage $archive) -Algorithm SHA256).Hash -ne $expected) { throw 'SHA256 mismatch.' }
 $unpacked = Join-Path $stage 'unpacked'
 Expand-Archive -LiteralPath (Join-Path $stage $archive) -DestinationPath $unpacked
-$newExe = Join-Path $unpacked 'eban.exe'
-if (-not (Test-Path -LiteralPath $newExe)) { throw 'Archive contains no eban.exe.' }
+$newExe = Join-Path $unpacked 'iban.exe'
+if (-not (Test-Path -LiteralPath $newExe)) { throw 'Archive contains no iban.exe.' }
 & $newExe help | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Downloaded executable failed its help check.' }
 if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
@@ -31,9 +31,9 @@ if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
     if ($LASTEXITCODE -ne 0) { throw 'FFmpeg installation failed.' }
 }
 New-Item -ItemType Directory -Path $installDir -Force | Out-Null
-$exe = Join-Path $installDir 'eban.exe'
-Get-Process eban -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe } | Stop-Process
-$backup = Join-Path $stage 'previous-eban.exe'
+$exe = Join-Path $installDir 'iban.exe'
+Get-Process iban -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe } | Stop-Process
+$backup = Join-Path $stage 'previous-iban.exe'
 if (Test-Path -LiteralPath $exe) { Move-Item -LiteralPath $exe -Destination $backup }
 try { Copy-Item -LiteralPath $newExe -Destination $exe }
 catch {

@@ -1,4 +1,4 @@
-# Go Architecture Rules (eban)
+# Go Architecture Rules (iban)
 
 Mandatory before touching any `.go` file. General Go knowledge lives in
 `.agents/skills/cc-skills-golang/` — load the relevant skill; this file only
@@ -8,11 +8,11 @@ contains project-specific constraints.
 
 ```
 <skeleton root>            agent rules (.opencode/rules/), skills (.agents/)
-└── eban/                  the Go project (module github.com/lewenbraun/go-skeleton/eban)
+└── iban/                  the Go project (module github.com/lewenbraun/iban/iban)
     ├── go.mod             tool directives: golangci-lint, govulncheck, stringer, modernize, goreleaser
     ├── .golangci.yml      20 linters + formatters
     ├── Makefile           build/install/test/vet/lint/fmt/vuln/modernize/check
-    ├── cmd/eban/          main.go — thin entry, no logic
+    ├── cmd/iban/          main.go — thin entry, no logic
     └── internal/
         ├── app/           CLI surface: dispatch, commands, flags, usage, watchdog, wiring
         ├── dictation/     orchestration Service + consumer-side seams (Recorder, Transcriber)
@@ -36,7 +36,7 @@ contains project-specific constraints.
 - Platform backends (Wayland/X11, future Windows) live only in
   `internal/output/`. Never leak platform checks outside that package
 - `state.Store` takes its directory as a constructor arg — tests use
-  `t.TempDir()`, never `/tmp/eban`
+  `t.TempDir()`, never `/tmp/iban`
 - New CLI commands: add to the `commands` map in `internal/app/commands.go`,
   keep builtin fallbacks in `runBuiltin`
 

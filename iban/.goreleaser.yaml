@@ -1,0 +1,32 @@
+version: 2
+
+project_name: iban
+
+builds:
+  - id: iban
+    main: ./cmd/iban
+    binary: iban
+    goos: [linux, windows]
+    goarch: [amd64]
+    flags: [-trimpath]
+    ldflags: ["-s -w"]
+
+archives:
+  - id: default
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+
+release:
+  draft: false
+  prerelease: auto
+
+changelog:
+  sort: asc
+  filters:
+    exclude: ["^docs:", "^chore:"]

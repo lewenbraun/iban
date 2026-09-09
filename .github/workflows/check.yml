@@ -12,6 +12,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: eban/go.mod
-          cache-dependency-path: eban/go.sum
-      - run: make -C eban check
+          go-version-file: iban/go.mod
+          cache-dependency-path: iban/go.sum
+      - run: make -C iban check

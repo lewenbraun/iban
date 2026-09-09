@@ -1,4 +1,4 @@
-# Go Code Rules (eban)
+# Go Code Rules (iban)
 
 Mandatory before editing any `.go` file. Style baseline is the
 golang-code-style and golang-naming skills; this file adds project rules.

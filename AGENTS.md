@@ -1,4 +1,4 @@
-# eban — agent instructions
+# iban — agent instructions
 
 Agents read this file before doing work in this repository. These instructions
 are mandatory.
@@ -35,15 +35,15 @@ explicit user approval.
   edit files unless the user explicitly says to write into the project
 - After finishing, re-scan the latest user message and verify nothing was
   skipped
-- Run `make -C eban check` after any code change; report linter output
+- Run `make -C iban check` after any code change; report linter output
   verbatim
 
 ## Project essentials
 
 - Skeleton root holds agent infrastructure only; the Go project lives in
-  `eban/` (module `github.com/lewenbraun/go-skeleton/eban`)
-- Binary `eban`: push-to-talk dictation, pw-record -> ElevenLabs Scribe v2
+  `iban/` (module `github.com/lewenbraun/iban/iban`)
+- Binary `iban`: push-to-talk dictation, pw-record -> ElevenLabs Scribe v2
   -> clipboard (wl-copy) / typing (wtype)
-- Tooling pinned in eban/go.mod `tool` block: golangci-lint, govulncheck,
+- Tooling pinned in iban/go.mod `tool` block: golangci-lint, govulncheck,
   stringer, modernize, goreleaser. Run via `go tool <name>` or make targets
 - Target: Arch Linux + Wayland + PipeWire. X11 fallback kept
