@@ -76,23 +76,28 @@ func launchFFmpeg(device, rawPath string) (int, error) {
 	return cmd.Process.Pid, nil
 }
 
-// Stop terminates ffmpeg and wraps the raw samples into a WAV file.
+// Stop terminates ffmpeg and wraps the raw samples into a WAV file. When
+// the recorder has no in-memory session (a CLI stop process), it finalizes
+// the default recording file instead.
 func (r *DShowRecorder) Stop(pid int) {
 	killAndWait(pid)
 	r.mu.Lock()
 	wav, raw := r.wav, r.raw
 	r.wav, r.raw = "", ""
 	r.mu.Unlock()
-	if wav != "" {
-		_ = WrapWAV(wav, raw)
+	if wav == "" {
+		finalizeDefaultRecording()
+		return
 	}
+	_ = WrapWAV(wav, raw)
 }
 
 func dshowArgs(device, rawPath string) []string {
 	return []string{
 		"-hide_banner", "-loglevel", "error", "-y",
 		"-f", "dshow", "-i", "audio=" + device,
-		"-ar", "16000", "-ac", "1", "-f", "s16le", rawPath,
+		"-ar", "16000", "-ac", "1", "-f", "s16le",
+		"-flush_packets", "1", rawPath,
 	}
 }
 

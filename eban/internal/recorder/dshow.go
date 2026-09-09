@@ -2,6 +2,7 @@ package recorder
 
 import (
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -11,9 +12,12 @@ type DShowDevice struct {
 	Alt  string
 }
 
+var endpointGUID = regexp.MustCompile(`\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}`)
+
 // dshowAudioInput resolves the ffmpeg dshow audio input specifier: the
-// EBAN_DSHOW_AUDIO override wins, otherwise the first capture device's
-// stable alternative name (or friendly name as a fallback).
+// EBAN_DSHOW_AUDIO override wins, otherwise the Windows default capture
+// device when one of the default endpoint GUIDs matches, otherwise the
+// first capture device.
 func dshowAudioInput(devices []DShowDevice) string {
 	if override := strings.TrimSpace(os.Getenv("EBAN_DSHOW_AUDIO")); override != "" {
 		return override
@@ -21,10 +25,32 @@ func dshowAudioInput(devices []DShowDevice) string {
 	if len(devices) == 0 {
 		return ""
 	}
-	if devices[0].Alt != "" {
-		return devices[0].Alt
+	return pickDevice(devices, matchDefaultDevice(DefaultCaptureEndpointIDs(), devices))
+}
+
+func pickDevice(devices []DShowDevice, i int) string {
+	if devices[i].Alt != "" {
+		return devices[i].Alt
 	}
-	return devices[0].Name
+	return devices[i].Name
+}
+
+// matchDefaultDevice returns the index of the device bound to the Windows
+// default capture endpoint, or 0 when no endpoint GUID matches. WASAPI
+// endpoint IDs and DirectShow alternative names carry the same device GUID,
+// so matching on it is stable across rename and locale changes.
+func matchDefaultDevice(defaults []string, devices []DShowDevice) int {
+	for _, def := range defaults {
+		for _, guid := range endpointGUID.FindAllString(def, -1) {
+			guid = strings.ToLower(guid)
+			for i, d := range devices {
+				if strings.Contains(strings.ToLower(d.Alt+" "+d.Name), guid) {
+					return i
+				}
+			}
+		}
+	}
+	return 0
 }
 
 // parseDShowDevices extracts the audio capture devices from the stderr

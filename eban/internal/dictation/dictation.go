@@ -29,6 +29,10 @@ type Transcriber interface {
 // TranscriberFactory builds a Transcriber lazily at stop time.
 type TranscriberFactory func() (Transcriber, error)
 
+// silencePeak is the minimum loudest sample (of 32767) for a recording to
+// count as audible; quieter captures are reported as silent.
+const silencePeak = 100
+
 // Config carries the tunable timeouts and paths of the service.
 type Config struct {
 	StateDir          string
@@ -212,6 +216,9 @@ func (s *Service) requireAudio() error {
 	info, err := os.Stat(s.store.WavPath())
 	if err != nil || info.Size() <= recorder.WAVHeaderSize {
 		return errors.New("no audio captured (check microphone and the ffmpeg log next to the recording)")
+	}
+	if recorder.PeakAmplitude(s.store.WavPath()) < silencePeak {
+		return errors.New("recording is silent; speak into the Windows default microphone or change the default input in Sound settings")
 	}
 	return nil
 }
