@@ -3,6 +3,7 @@
 package tray
 
 import (
+	"log"
 	"syscall"
 	"unsafe"
 )
@@ -138,6 +139,7 @@ func (w *trayWindow) setIcon(icon uintptr) {
 }
 
 func (w *trayWindow) balloon(text string) {
+	log.Print(text)
 	nid := w.baseNotify(nifInfo)
 	copy(nid.szInfo[:], syscall.StringToUTF16(text))
 	copy(nid.szInfoTitle[:], syscall.StringToUTF16("eban"))

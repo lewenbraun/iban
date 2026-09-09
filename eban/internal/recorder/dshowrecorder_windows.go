@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"syscall"
 )
@@ -30,6 +31,9 @@ func New() *DShowRecorder {
 
 // Start launches a detached ffmpeg process capturing raw PCM samples.
 func (r *DShowRecorder) Start(wavPath string) (int, error) {
+	if err := os.MkdirAll(filepath.Dir(wavPath), 0o700); err != nil {
+		return 0, err
+	}
 	device := audioDevice()
 	if device == "" {
 		return 0, errors.New("no dshow audio device found (install ffmpeg or set EBAN_DSHOW_AUDIO)")

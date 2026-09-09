@@ -33,7 +33,13 @@ func dshowAudioInput(devices []DShowDevice) string {
 func parseDShowDevices(out []byte) []DShowDevice {
 	var devices []DShowDevice
 	audio := false
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
+		if strings.HasSuffix(strings.TrimSpace(line), "(audio)") {
+			audio = true
+		}
+		if strings.HasSuffix(strings.TrimSpace(line), "(video)") {
+			audio = false
+		}
 		switch {
 		case strings.Contains(line, "DirectShow audio devices"):
 			audio = true
