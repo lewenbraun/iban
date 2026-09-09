@@ -19,7 +19,8 @@ jobs:
           go-version-file: eban/go.mod
       - name: Build and publish release
         working-directory: eban
-        run: go tool goreleaser release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        run: go tool goreleaser release --clean
 
   bump-scoop-manifest:
     needs: release
