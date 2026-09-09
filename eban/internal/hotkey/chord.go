@@ -1,7 +1,8 @@
 // Package hotkey turns raw keyboard events into dictation actions for the
-// Alt+Space chord family: holding Alt+Space records and pastes with Enter,
-// adding V while held switches to paste-only, adding B to clipboard-only.
-// Releasing any chord key stops the recording.
+// Alt+Space chord family. Recording is toggle-driven: one chord press starts
+// the recording, the next chord press stops it. Holding V as part of the
+// chord starts in paste-only mode, B in clipboard-only mode; pressing V or B
+// while the chord is held during a recording switches the delivery mode.
 package hotkey
 
 import (
@@ -36,13 +37,19 @@ type Event struct {
 }
 
 // Chord tracks the physical state of the Alt+Space chord and decides which
-// events belong to it. It is not safe for concurrent use; feed it from the
+// events belong to it. A chord press fires once, when both keys transition
+// to held; auto-repeat and releases never retrigger it. While a toggle
+// recording runs, keys pressed without the full chord held pass through to
+// the system untouched. It is not safe for concurrent use; feed it from the
 // same thread that receives the keyboard events.
 type Chord struct {
-	alt     bool
-	space   bool
-	started bool
-	mode    state.Mode
+	alt            bool
+	space          bool
+	v              bool
+	b              bool
+	started        bool
+	mode           state.Mode
+	swallowSpaceUp bool
 }
 
 // Key feeds one keyboard event and returns the triggered action, the
@@ -71,67 +78,66 @@ func (c *Chord) Mode() state.Mode {
 
 func (c *Chord) altKey(down bool) (Action, state.Mode, bool) {
 	if down {
+		wasHeld := c.alt
 		c.alt = true
-		if c.space && !c.started {
-			return c.start(), c.mode, false
+		if c.space && !wasHeld {
+			return c.press(), c.mode, false
 		}
 		return ActionNone, c.mode, false
 	}
 	c.alt = false
-	if c.started {
-		return c.finish(false)
-	}
 	return ActionNone, c.mode, false
 }
 
 func (c *Chord) spaceKey(down bool) (Action, state.Mode, bool) {
 	if down {
-		armed := c.alt || c.started
-		if !c.space {
-			c.space = true
-			if armed && !c.started {
-				return c.start(), c.mode, true
-			}
+		wasHeld := c.space
+		c.space = true
+		if c.alt && !wasHeld {
+			c.swallowSpaceUp = true
+			return c.press(), c.mode, true
 		}
-		return ActionNone, c.mode, armed
-	}
-	wasChord := c.started
-	c.space = false
-	if wasChord {
-		return c.finish(true)
-	}
-	return ActionNone, c.mode, false
-}
-
-func (c *Chord) selectorKey(vk uint32, down bool) (Action, state.Mode, bool) {
-	if !c.started {
 		return ActionNone, c.mode, false
 	}
-	if down {
-		c.mode = state.ModePaste
-		if vk == VKKeyB {
-			c.mode = state.ModeCopy
-		}
-		return ActionSelect, c.mode, true
-	}
-	return ActionNone, c.mode, true
+	c.space = false
+	swallow := c.swallowSpaceUp
+	c.swallowSpaceUp = false
+	return ActionNone, c.mode, swallow
 }
 
-func (c *Chord) start() Action {
+// press resolves one full chord press: it toggles the recording and picks
+// the delivery mode from the selector keys held at press time.
+func (c *Chord) press() Action {
+	if c.started {
+		c.started = false
+		return ActionStop
+	}
 	c.started = true
 	c.mode = state.ModePasteEnter
+	if c.v {
+		c.mode = state.ModePaste
+	}
+	if c.b {
+		c.mode = state.ModeCopy
+	}
 	return ActionStart
 }
 
-func (c *Chord) finish(swallow bool) (Action, state.Mode, bool) {
-	mode := c.mode
-	c.reset()
-	return ActionStop, mode, swallow
-}
-
-func (c *Chord) reset() {
-	c.alt = false
-	c.space = false
-	c.started = false
-	c.mode = ""
+// selectorKey only reacts while the full chord is physically held, so V and
+// B typed during a toggle recording reach the active application normally.
+func (c *Chord) selectorKey(vk uint32, down bool) (Action, state.Mode, bool) {
+	held := c.alt && c.space
+	if vk == VKKeyV {
+		c.v = down
+	} else {
+		c.b = down
+	}
+	if !down || !held || !c.started {
+		return ActionNone, c.mode, held
+	}
+	c.mode = state.ModePaste
+	if vk == VKKeyB {
+		c.mode = state.ModeCopy
+	}
+	return ActionSelect, c.mode, true
 }

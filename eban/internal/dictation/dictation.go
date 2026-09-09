@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/lewenbraun/eban/eban/internal/output"
@@ -129,6 +130,9 @@ func (s *Service) Stop(lang string, paste, pressEnter bool) error {
 		s.store.SetIndicator(state.IndicatorIdle)
 		return fmt.Errorf("recording too short (min %d ms)", s.minRecording.Milliseconds())
 	}
+	if err := s.requireAudio(); err != nil {
+		return s.fail(err)
+	}
 	s.store.SetState(state.StateTranscribing)
 	s.store.SetIndicator(state.IndicatorTranscribing)
 	paste = paste || mode == state.ModePaste || mode == state.ModePasteEnter
@@ -202,6 +206,14 @@ func (s *Service) transcribe(lang string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.transcribeWait)
 	defer cancel()
 	return tr.Transcribe(ctx, s.store.WavPath(), lang)
+}
+
+func (s *Service) requireAudio() error {
+	info, err := os.Stat(s.store.WavPath())
+	if err != nil || info.Size() <= recorder.WAVHeaderSize {
+		return errors.New("no audio captured (check microphone and the ffmpeg log next to the recording)")
+	}
+	return nil
 }
 
 func (s *Service) clampTimeout(d time.Duration) time.Duration {

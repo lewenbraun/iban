@@ -21,10 +21,12 @@ Flags (toggle, start, stop):
   -lang code  speech language, auto-detected by default
   -timeout    max recording length (default 10m)
 
-Tray hotkeys (hold to record, release to deliver):
-  Alt+Space     paste into the invoking window and press Enter
-  Alt+Space+V   paste into the invoking window
-  Alt+Space+B   copy to clipboard only
+Tray hotkeys (press once to start, press again to stop and deliver):
+  Alt+Space     toggle dictation; paste into the invoking window + Enter
+  Alt+Space+V   toggle in paste-only mode (hold V as part of the press)
+  Alt+Space+B   toggle in clipboard-only mode (hold B as part of the press)
+  While still holding the starting press, V or B switches the delivery mode.
+  Keys typed without the chord held reach the active window normally.
 
 Setup:
   scoop install ffmpeg (recording backend)

@@ -13,6 +13,8 @@ const (
 	wavSampleRate = 16000
 	wavChannels   = 1
 	wavBits       = 16
+	// WAVHeaderSize is the byte length of the canonical PCM header.
+	WAVHeaderSize = 44
 )
 
 // WrapWAV prepends a canonical PCM WAV header to the raw little-endian
@@ -56,7 +58,7 @@ func wavHeader(dataSize uint32) []byte {
 	const bits = uint16(wavBits)
 	byteRate := rate * uint32(channels) * uint32(bits) / 8
 	blockAlign := channels * bits / 8
-	h := make([]byte, 44)
+	h := make([]byte, WAVHeaderSize)
 	copy(h[0:], "RIFF")
 	binary.LittleEndian.PutUint32(h[4:], 36+dataSize)
 	copy(h[8:], "WAVE")

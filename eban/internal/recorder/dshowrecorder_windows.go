@@ -13,6 +13,7 @@ import (
 
 const (
 	rawSuffix       = ".raw"
+	ffmpegLogSuffix = ".ffmpeg.log"
 	detachedProcess = 0x00000008
 	detachedFlags   = syscall.CREATE_NEW_PROCESS_GROUP | detachedProcess
 )
@@ -41,6 +42,19 @@ func (r *DShowRecorder) Start(wavPath string) (int, error) {
 	_ = os.Remove(wavPath)
 	rawPath := wavPath + rawSuffix
 	_ = os.Remove(rawPath)
+	pid, err := launchFFmpeg(device, rawPath)
+	if err != nil {
+		return 0, err
+	}
+	r.mu.Lock()
+	r.wav, r.raw = wavPath, rawPath
+	r.mu.Unlock()
+	return pid, nil
+}
+
+// launchFFmpeg starts the detached capture process; its stderr goes to a
+// truncating log beside the raw file so device failures stay diagnosable.
+func launchFFmpeg(device, rawPath string) (int, error) {
 	cmd := exec.Command("ffmpeg", dshowArgs(device, rawPath)...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: detachedFlags}
 	devnull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
@@ -48,15 +62,17 @@ func (r *DShowRecorder) Start(wavPath string) (int, error) {
 		return 0, err
 	}
 	defer func() { _ = devnull.Close() }()
+	ffmpegLog, err := os.OpenFile(rawPath+ffmpegLogSuffix, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = ffmpegLog.Close() }()
 	cmd.Stdout = devnull
-	cmd.Stderr = devnull
+	cmd.Stderr = ffmpegLog
 	if err := cmd.Start(); err != nil {
 		return 0, errors.New("ffmpeg not available")
 	}
 	go func() { _ = cmd.Wait() }()
-	r.mu.Lock()
-	r.wav, r.raw = wavPath, rawPath
-	r.mu.Unlock()
 	return cmd.Process.Pid, nil
 }
 

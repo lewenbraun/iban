@@ -90,7 +90,7 @@ func runWorker(svc *dictation.Service, store *state.Store, w *trayWindow, events
 func runEvent(svc *dictation.Service, store *state.Store, w *trayWindow, ev chordEvent) {
 	switch ev.action {
 	case hotkey.ActionStart:
-		startRecording(svc, w)
+		startRecording(svc, w, ev.mode)
 	case hotkey.ActionSelect:
 		store.SetMode(ev.mode)
 	case hotkey.ActionStop:
@@ -99,9 +99,9 @@ func runEvent(svc *dictation.Service, store *state.Store, w *trayWindow, ev chor
 	}
 }
 
-func startRecording(svc *dictation.Service, w *trayWindow) {
+func startRecording(svc *dictation.Service, w *trayWindow, mode state.Mode) {
 	w.setIcon(w.icons.record)
-	if err := svc.Start(state.ModePasteEnter, "", 0); err != nil {
+	if err := svc.Start(mode, "", 0); err != nil {
 		w.balloon(err.Error())
 		w.setIcon(w.icons.idle)
 	}

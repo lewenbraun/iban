@@ -20,7 +20,7 @@ Then run the installation/update command again. It reads the saved user variable
 
 PowerShell ExecutionPolicy is not needed for `eban.exe`. If Scoop requires RemoteSigned, set it only for your user; do not change it for each update.
 
-Hold Alt+Space to record and release to paste and press Enter. Alt+Space+V pastes without Enter; Alt+Space+B copies only.
+Press Alt+Space once to start recording; press Alt+Space again to stop, paste and press Enter. Hold V as part of the press for paste-only delivery; hold B for clipboard-only.
 
 # Release maintenance
 
