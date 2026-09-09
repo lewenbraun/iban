@@ -20,7 +20,8 @@ jobs:
       - name: Build and publish release
         working-directory: eban
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        run: go tool goreleaser release --clean
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: go tool goreleaser release --clean
 
   bump-scoop-manifest:
     needs: release
