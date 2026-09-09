@@ -1,27 +1,28 @@
 {
-    "version": "0.0.0",
-    "description": "Push-to-talk dictation via ElevenLabs Scribe v2",
-    "homepage": "https://github.com/lewenbraun/eban",
-    "depends": "ffmpeg",
-    "architecture": {
-        "64bit": {
-            "url": "https://github.com/lewenbraun/eban/releases/download/v0.0.0/eban_0.0.0_windows_amd64.zip"
-        }
-    },
-    "bin": "eban.exe",
-    "notes": "Run 'eban tray' (or add it to autostart) for the tray indicator and Alt+Space hotkeys. Set ELEVENLABS_API_KEY or create the apikey file under .config\\eban in your home directory.",
-    "checkver": {
-        "github": "https://github.com/lewenbraun/eban"
-    },
-    "autoupdate": {
-        "architecture": {
-            "64bit": {
-                "url": "https://github.com/lewenbraun/eban/releases/download/v$version/eban_$version_windows_amd64.zip",
-                "hash": {
-                    "url": "https://github.com/lewenbraun/eban/releases/download/v$version/eban_$version_checksums.txt",
-                    "regex": "([A-Fa-f0-9]{64})\\s+eban_$version_windows_amd64\\.zip"
-                }
-            }
-        }
+  "version": "0.0.3",
+  "description": "Push-to-talk dictation via ElevenLabs Scribe v2",
+  "homepage": "https://github.com/lewenbraun/eban",
+  "depends": "ffmpeg",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/lewenbraun/eban/releases/download/v0.0.3/eban_0.0.3_windows_amd64.zip",
+      "hash": "569f3280c61b0848825d68f7916ff86cb48974cad33ed5a832c9e8c0852430a7"
     }
+  },
+  "bin": "eban.exe",
+  "notes": "Run 'eban tray' (or add it to autostart) for the tray indicator and Alt+Space hotkeys. Set ELEVENLABS_API_KEY or create the apikey file under .config\\eban in your home directory.",
+  "checkver": {
+    "github": "https://github.com/lewenbraun/eban"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/lewenbraun/eban/releases/download/v$version/eban_$version_windows_amd64.zip",
+        "hash": {
+          "url": "https://github.com/lewenbraun/eban/releases/download/v$version/eban_$version_checksums.txt",
+          "regex": "([A-Fa-f0-9]{64})\\s+eban_$version_windows_amd64\\.zip"
+        }
+      }
+    }
+  }
 }
